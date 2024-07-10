@@ -1,27 +1,12 @@
-// backend/models/Course.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  trainer: {
-    type: String,
-    required: true,
-  },
-  courseImage: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  title: { type: String, required: true },
+  instructor: { type: String, required: true },
+  description: { type: String, required: true },
+  image: { type: String, required: true },
 });
 
-module.exports = mongoose.model("Course", courseSchema);
+const Course = mongoose.model("Course", courseSchema);
+
+export default Course;

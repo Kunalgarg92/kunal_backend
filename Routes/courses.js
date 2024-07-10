@@ -1,92 +1,91 @@
+// routes/courses.js
+
 import express from "express";
 import multer from "multer";
+import Course from "../models/Course.js";
 
 const router = express.Router();
 
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./uploads/");
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + "-" + file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
 const upload = multer({ storage: storage });
 
-router.post("/courses", upload.single("courseImage"), async (req, res) => {
-  const { title, description, trainer } = req.body;
-  const courseImage = req.file.path;
-
+// Create a new course
+router.post("/courses", upload.single("image"), async (req, res, next) => {
   try {
-    const newCourse = new Course({
+    const { title, instructor, description } = req.body;
+    const image = req.file.path;
+
+    const course = new Course({
       title,
+      instructor,
       description,
-      trainer,
-      courseImage,
+      image,
     });
 
-    const savedCourse = await newCourse.save();
-    res.status(201).json(savedCourse);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await course.save();
+    res.status(201).json(course);
+  } catch (error) {
+    next(error);
   }
 });
 
-router.get("/courses", async (req, res) => {
+// Get all courses
+router.get("/courses", async (req, res, next) => {
   try {
     const courses = await Course.find();
-    res.status(200).json(courses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json(courses);
+  } catch (error) {
+    next(error);
   }
 });
 
-router.get("/courses/:id", async (req, res) => {
-  const { id } = req.params;
+// Get a single course
+router.get("/courses/:id", async (req, res, next) => {
   try {
-    const course = await Course.findById(id);
+    const course = await Course.findById(req.params.id);
     if (!course) {
-      return res.status(404).json({ error: "Course not found" });
+      return res.status(404).json({ message: "Course not found" });
     }
-    res.status(200).json(course);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json(course);
+  } catch (error) {
+    next(error);
   }
 });
 
-router.put("/courses/:id", async (req, res) => {
-  const { id } = req.params;
-  const { title, description, trainer } = req.body;
-
+// Update a course
+router.put("/courses/:id", async (req, res, next) => {
   try {
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      { title, description, trainer },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedCourse) {
-      return res.status(404).json({ error: "Course not found" });
+    const { id } = req.params;
+    const course = await Course.findByIdAndUpdate(id, req.body, { new: true });
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
     }
-
-    res.status(200).json(updatedCourse);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.json(course);
+  } catch (error) {
+    next(error);
   }
 });
 
-router.delete("/courses/:id", async (req, res) => {
-  const { id } = req.params;
-
+// Delete a course
+router.delete("/courses/:id", async (req, res, next) => {
   try {
-    const deletedCourse = await Course.findByIdAndDelete(id);
-    if (!deletedCourse) {
-      return res.status(404).json({ error: "Course not found" });
+    const { id } = req.params;
+    const course = await Course.findByIdAndDelete(id);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
     }
-    res.status(200).json({ message: "Course deleted successfully" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.json({ message: "Course deleted successfully" });
+  } catch (error) {
+    next(error);
   }
 });
 
